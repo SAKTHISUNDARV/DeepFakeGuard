@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import Header from './Header';
-import Footer from './Footer';
 import { ThemeProvider } from '../context/ThemeContext';  // adjust path as needed
 
 const Layout = () => {
@@ -14,7 +13,6 @@ const Layout = () => {
             <Outlet />
           </AnimatePresence>
         </main>
-        <Footer />
       </div>
     </ThemeProvider>
   );
