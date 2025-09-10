@@ -16,17 +16,17 @@ const HomePage = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-transparent to-gray-900" />
         
         {/* Content */}
-        <div className="relative max-w-4xl mx-auto px-4 py-32 md:py-48">
+        <div className="relative max-w-4xl mx-auto px-4 py-32 my-auto flex flex-col justify-center items-center">
           <h1 className="text-4xl md:text-6xl font-bold leading-tight">
             Detect Deepfakes with <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Advanced AI</span>
           </h1>
           <p className="mt-6 text-lg md:text-xl text-white/80 max-w-2xl mx-auto">
             DeepFakeGuard uses cutting-edge AI to identify manipulated media with high accuracy. Protect yourself from digital fraud and misinformation.
           </p>
-          <div className="mt-10">
+          <div className="mt-10 ">
             <Link to="/upload">
               <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-700 hover:from-blue-700 cursor-pointer hover:to-purple-800 font-semibold shadow-lg">
-                <Upload size={20} className="mr-2" />
+                <Upload size={20} className="-2" />
                 Upload Media to Analyze
               </Button>
             </Link>
