@@ -14,7 +14,7 @@ const Header = () => {
   const navLinks = [
     { name: 'Home', path: '/', icon: <Home size={18} /> },
     { name: 'Upload', path: '/upload', icon: <Upload size={18} /> },
-    { name: 'Dashboard', path: '/dashboard', icon: <Activity size={18} /> },
+    // { name: 'Dashboard', path: '/dashboard', icon: <Activity size={18} /> },
     { name: 'About', path: '/about', icon: <Info size={18} /> },
   ];
 

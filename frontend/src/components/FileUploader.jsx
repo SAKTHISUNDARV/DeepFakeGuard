@@ -24,7 +24,6 @@ const FileUploader = ({ onFileSelected, accept, maxSize = 10485760 }) => {
     },
     [onFileSelected]
   );
-
   const {
     getRootProps,
     getInputProps,
