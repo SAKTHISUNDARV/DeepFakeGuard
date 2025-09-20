@@ -1,12 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload as UploadIcon, FileText, X } from 'lucide-react';
-import { generateMockResult } from '../utils/mockData';
-import { getRandomDelay } from '../utils/helpers';
+import { Upload as UploadIcon, FileText } from 'lucide-react';
+import axios from 'axios';
 
-import axios from 'axios'; 
-
-// A simple spinner for the loading state
+// Spinner component
 const Spinner = () => (
   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -28,36 +25,35 @@ const UploadPage = () => {
   };
 
   const handleFileChange = (event) => {
-    if (event.target.files[0].size > 5 * 1024 * 1024) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
       alert("File size exceeds 5MB limit. Please choose a smaller file.");
       return;
     }
 
-    //the file duration must not exceed 30 seconds for videos
-    if (event.target.files[0].type.startsWith('video/')) {
+    if (file.type.startsWith('video/')) {
       const video = document.createElement('video');
-      video.src = URL.createObjectURL(event.target.files[0]);
+      video.src = URL.createObjectURL(file);
       video.onloadedmetadata = () => {
         if (video.duration > 30) {
           alert("Video duration exceeds 30 seconds. Please choose a shorter video.");
           return;
         }
+        handleFile(file); // only add file if duration is OK
       };
-    }
-
-    if (event.target.files && event.target.files.length > 0 ) {
-      handleFile(event.target.files[0]);
+    } else {
+      handleFile(file);
     }
   };
 
   const clearFile = () => {
     setSelectedFile(null);
-    if (inputFileRef.current) {
-      inputFileRef.current.value = null;
-    }
+    if (inputFileRef.current) inputFileRef.current.value = null;
   };
 
-  // Drag and Drop Handlers
+  // Drag & Drop handlers
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -69,70 +65,69 @@ const UploadPage = () => {
       handleFile(e.dataTransfer.files[0]);
     }
   };
-  
- const handleAnalyze = async () => {
-  if (!selectedFile) return;
-  setIsProcessing(true);
 
-  try {
-    // Choose endpoint based on file type
-    const fileType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-    const endpoint =
-      fileType === 'image'
+  const handleAnalyze = async () => {
+    if (!selectedFile) return;
+    setIsProcessing(true);
+
+    try {
+      const fileType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
+      const endpoint = fileType === 'image'
         ? 'http://127.0.0.1:8000/predict/image'
         : 'http://127.0.0.1:8000/predict/video';
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+      const formData = new FormData();
+      formData.append('file', selectedFile);
 
-    const response = await axios.post(endpoint, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+      const response = await axios.post(endpoint, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
 
-    const apiResult = response.data;
+      const apiResult = response.data;
 
-    // Prepare object for ResultsPage
-    const result = {
-      id: Date.now(), // unique id for route
-      fileName: selectedFile.name,
-      fileUrl: fileType === 'image' ? URL.createObjectURL(selectedFile) : null,
-      sourceType: fileType,
-      // map API values
-      status:
-        apiResult.result.toLowerCase() === 'fake'
-          ? 'deepfake'
-          : 'authentic',
-      confidence: 1 - apiResult.score, // if your model outputs Fake prob, Real = 1-score
-      raw: apiResult,
-    };
+      const result = {
+        id: Date.now(),
+        fileName: selectedFile.name,
+        fileUrl: URL.createObjectURL(selectedFile), // ✅ works for both images & videos
+        sourceType: fileType,
+        status: apiResult.result.toLowerCase() === 'fake' ? 'deepfake' : 'authentic',
+        confidence: 1 - apiResult.score,
+        raw: apiResult,
+      };
 
-    navigate(`/results/${result.id}`, { state: { result } });
-  } catch (error) {
-    alert('Error analyzing file. Check the backend logs.');
-    console.error(error);
-  } finally {
-    setIsProcessing(false);
-  }
-};
+      navigate(`/results/${result.id}`, { state: { result } });
+
+    } catch (error) {
+      alert('Error analyzing file. Check backend logs.');
+      console.error(error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
-        
         <h1 className="text-4xl font-bold">
           Analyze Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Media</span>
         </h1>
-        <p className="mt-4 text-lg text-white/70">
-          Upload a file to check for deepfake manipulation.
-        </p>
+        <p className="mt-4 text-lg text-white/70">Upload a file to check for deepfake manipulation.</p>
 
         <div className="mt-12">
           <div
-            onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
             className={`p-8 bg-gray-800/50 border-2 border-dashed rounded-lg transition-colors duration-300 ${isDragging ? 'border-purple-500 bg-purple-500/10' : 'border-gray-700'}`}
           >
             <input
-              id="file-upload" type="file" ref={inputFileRef} className="hidden" onChange={handleFileChange} accept="image/*,video/*"
+              id="file-upload"
+              type="file"
+              ref={inputFileRef}
+              className="hidden"
+              onChange={handleFileChange}
+              accept="image/*,video/*"
             />
             {selectedFile ? (
               <div>
@@ -150,7 +145,7 @@ const UploadPage = () => {
                 <UploadIcon size={32} className="mb-4 text-gray-400" />
                 <p className="font-semibold text-white">Drag & drop or click to upload</p>
                 <p className="text-sm text-gray-500 mt-2">Images and videos up to 10MB</p>
-                <p className='text-sm text-gray-500 mt-1'>(Videos must be under 30 seconds)</p>
+                <p className="text-sm text-gray-500 mt-1">(Videos must be under 30 seconds)</p>
               </label>
             )}
           </div>
@@ -166,7 +161,6 @@ const UploadPage = () => {
             {isProcessing ? 'Analyzing...' : 'Analyze for Deepfakes'}
           </button>
         </div>
-        
       </div>
     </div>
   );
