@@ -4,6 +4,8 @@ import { Upload as UploadIcon, FileText, X } from 'lucide-react';
 import { generateMockResult } from '../utils/mockData';
 import { getRandomDelay } from '../utils/helpers';
 
+import axios from 'axios'; 
+
 // A simple spinner for the loading state
 const Spinner = () => (
   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -26,7 +28,24 @@ const UploadPage = () => {
   };
 
   const handleFileChange = (event) => {
-    if (event.target.files && event.target.files.length > 0) {
+    if (event.target.files[0].size > 5 * 1024 * 1024) {
+      alert("File size exceeds 5MB limit. Please choose a smaller file.");
+      return;
+    }
+
+    //the file duration must not exceed 30 seconds for videos
+    if (event.target.files[0].type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.src = URL.createObjectURL(event.target.files[0]);
+      video.onloadedmetadata = () => {
+        if (video.duration > 30) {
+          alert("Video duration exceeds 30 seconds. Please choose a shorter video.");
+          return;
+        }
+      };
+    }
+
+    if (event.target.files && event.target.files.length > 0 ) {
       handleFile(event.target.files[0]);
     }
   };
@@ -51,22 +70,50 @@ const UploadPage = () => {
     }
   };
   
-  const handleAnalyze = () => {
-    if (!selectedFile) return;
-    setIsProcessing(true);
+ const handleAnalyze = async () => {
+  if (!selectedFile) return;
+  setIsProcessing(true);
 
-    setTimeout(() => {
-      const fileType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
-      const result = generateMockResult(fileType, selectedFile.name);
+  try {
+    // Choose endpoint based on file type
+    const fileType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
+    const endpoint =
+      fileType === 'image'
+        ? 'http://127.0.0.1:8000/predict/image'
+        : 'http://127.0.0.1:8000/predict/video';
 
-      // **CRITICAL FIX**: Create the temporary URL for the image to display on the results page
-      if (fileType === 'image') {
-        result.fileUrl = URL.createObjectURL(selectedFile);
-      }
-      
-      navigate(`/results/${result.id}`, { state: { result } });
-    }, getRandomDelay(1500, 3000));
-  };
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+
+    const response = await axios.post(endpoint, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+
+    const apiResult = response.data;
+
+    // Prepare object for ResultsPage
+    const result = {
+      id: Date.now(), // unique id for route
+      fileName: selectedFile.name,
+      fileUrl: fileType === 'image' ? URL.createObjectURL(selectedFile) : null,
+      sourceType: fileType,
+      // map API values
+      status:
+        apiResult.result.toLowerCase() === 'fake'
+          ? 'deepfake'
+          : 'authentic',
+      confidence: 1 - apiResult.score, // if your model outputs Fake prob, Real = 1-score
+      raw: apiResult,
+    };
+
+    navigate(`/results/${result.id}`, { state: { result } });
+  } catch (error) {
+    alert('Error analyzing file. Check the backend logs.');
+    console.error(error);
+  } finally {
+    setIsProcessing(false);
+  }
+};
 
   return (
     <div className="bg-gray-900 text-white min-h-screen">
@@ -103,6 +150,7 @@ const UploadPage = () => {
                 <UploadIcon size={32} className="mb-4 text-gray-400" />
                 <p className="font-semibold text-white">Drag & drop or click to upload</p>
                 <p className="text-sm text-gray-500 mt-2">Images and videos up to 10MB</p>
+                <p className='text-sm text-gray-500 mt-1'>(Videos must be under 30 seconds)</p>
               </label>
             )}
           </div>

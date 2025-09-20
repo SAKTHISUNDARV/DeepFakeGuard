@@ -9,7 +9,7 @@ from tensorflow.keras.applications.efficientnet import EfficientNetB0, preproces
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
+                                                                                                
 # === Paths (adjust if needed) ===
 # This makes the path robust when predictor.py is in services/
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # one level up from services/
