@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Upload as UploadIcon, FileText } from 'lucide-react';
+import { Upload as UploadIcon, FileText, Info } from 'lucide-react';
 import axios from 'axios';
 
 // Spinner component
@@ -15,6 +15,7 @@ const UploadPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [showInfo, setShowInfo] = useState(false); // <-- for info tooltip
   const navigate = useNavigate();
   const inputFileRef = useRef(null);
 
@@ -41,7 +42,7 @@ const UploadPage = () => {
           alert("Video duration exceeds 30 seconds. Please choose a shorter video.");
           return;
         }
-        handleFile(file); // only add file if duration is OK
+        handleFile(file);
       };
     } else {
       handleFile(file);
@@ -53,7 +54,6 @@ const UploadPage = () => {
     if (inputFileRef.current) inputFileRef.current.value = null;
   };
 
-  // Drag & Drop handlers
   const handleDragEnter = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
   const handleDragLeave = (e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); };
   const handleDragOver = (e) => { e.preventDefault(); e.stopPropagation(); };
@@ -88,7 +88,7 @@ const UploadPage = () => {
       const result = {
         id: Date.now(),
         fileName: selectedFile.name,
-        fileUrl: URL.createObjectURL(selectedFile), // ✅ works for both images & videos
+        fileUrl: URL.createObjectURL(selectedFile),
         sourceType: fileType,
         status: apiResult.result.toLowerCase() === 'fake' ? 'deepfake' : 'authentic',
         confidence: 1 - apiResult.score,
@@ -108,9 +108,21 @@ const UploadPage = () => {
   return (
     <div className="bg-gray-900 text-white min-h-screen">
       <div className="max-w-xl mx-auto px-4 py-16 sm:py-24 text-center">
-        <h1 className="text-4xl font-bold">
-          Analyze Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Media</span>
-        </h1>
+        <div className="flex items-center justify-center gap-2">
+          <h1 className="text-4xl font-bold">
+            Analyze Your <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Media</span>
+          </h1>
+          <div className="relative">
+            <Info size={20} className="text-gray-400 cursor-pointer" onClick={() => setShowInfo(!showInfo)} />
+            {showInfo && (
+              <div className="absolute top-6 right-0 w-72 p-3 text-sm text-gray-900 bg-white rounded-lg shadow-lg z-50">
+                <p>• Confidence score indicates how much you can trust the result.</p>
+                <p>• Uploaded files are processed locally or on the server and are not stored.</p>
+                <p>• AI-generated results are indicative, not guaranteed.</p>
+              </div>
+            )}
+          </div>
+        </div>
         <p className="mt-4 text-lg text-white/70">Upload a file to check for deepfake manipulation.</p>
 
         <div className="mt-12">

@@ -1,0 +1,9 @@
+fastapi==0.111.0
+uvicorn[standard]==0.23.2
+numpy==1.26.0
+opencv-python==4.8.1.78
+mediapipe==0.10.2
+tensorflow==2.13.0
+python-multipart==0.0.6   # required by FastAPI for UploadFile
+pydantic==2.6.0           # data validation (FastAPI dependency)
+tensorflow-gpu==2.13.0    # if you have a compatible GPU
