@@ -17,7 +17,6 @@ const FileUploader = ({ onFileSelected, accept, maxSize = 10485760 }) => {
           const objectUrl = URL.createObjectURL(file);
           setPreview(objectUrl);
 
-          // Cleanup when component unmounts or next file selected
           return () => URL.revokeObjectURL(objectUrl);
         }
       }
