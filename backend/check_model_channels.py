@@ -19,7 +19,6 @@ if hasattr(model, 'input_shape'):
 else:
     print("⚠️ Model has no attribute 'input_shape'")
 
-# Inspect first layer weights
 first_layer = model.layers[0]
 if hasattr(first_layer, 'weights') and first_layer.weights:
     w = first_layer.weights[0]
