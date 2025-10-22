@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
                                                                                                 
 # === Paths (adjust if needed) ===
 # This makes the path robust when predictor.py is in services/
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))  # one level up from services/
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))   # one level up from services/
 MODEL_PATH = os.path.join(BASE_DIR, "models", "deepfake_classifier.keras")
 
 # === Load classifier (final classifier) ===
@@ -94,7 +94,6 @@ def preprocess_image(image_path, target_size=(224, 224)):
     if not faces_embeddings:
         return None
     return np.array(faces_embeddings)
-
 
 # === Video helpers ===
 def extract_frames(video_path, output_dir, frame_skip=5):
